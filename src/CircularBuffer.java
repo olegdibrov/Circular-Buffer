@@ -1,4 +1,6 @@
-import java.util.NoSuchElementException;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.List;
 
 public class CircularBuffer<T> {
     private T[] elements;
@@ -41,22 +43,54 @@ public class CircularBuffer<T> {
             } else if (!full) {
                 head = tail - 1;
                 elements[head] = t;
+                head++;
                 amount++;
+            }
+            if (amount == size) {
+                full = true;
             }
         } else throw new RuntimeException("The buffer is full");
     }
 
     public T get() {
         if (!isEmpty()) {
+            if (tail == size) {
+                tail = 0;
+            }
             T element = elements[tail];
             tail++;
+            amount--;
             full = false;
             return element;
         } else throw new RuntimeException("The buffer is empty");
     }
 
-    private boolean isEmpty() {
+    public boolean isEmpty() {
         return head == tail && !full;
+    }
+
+    public void sort(Comparator<? super T> comparator) {
+        T[] tailHeadElements = Arrays.copyOfRange(elements, tail, head);
+        Arrays.sort(tailHeadElements, comparator);
+        head = 0;
+        tail = 0;
+        amount = 0;
+        addAll(Arrays.asList(tailHeadElements));
+    }
+
+    public void sort() {
+        T[] tailHeadElements = Arrays.copyOfRange(elements, tail, head);
+        Arrays.sort(tailHeadElements);
+        head = 0;
+        tail = 0;
+        amount= 0;
+        addAll(Arrays.asList(tailHeadElements));
+    }
+
+    public void addAll(List<? extends T> toAdd) {
+        for (T t : toAdd) {
+            put(t);
+        }
     }
 
     private boolean isFull() {
