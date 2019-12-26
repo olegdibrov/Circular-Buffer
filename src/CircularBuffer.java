@@ -1,8 +1,7 @@
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class CircularBuffer<T> {
+    private final Class<T[]> type;
     private T[] elements;
     private int amount;
     private int head;
@@ -10,7 +9,8 @@ public class CircularBuffer<T> {
     private boolean full;
     private int size;
 
-    public CircularBuffer() {
+    public CircularBuffer(Class<T[]> type) {
+        this.type = type;
         this.head = 0;
         this.tail = 0;
         this.amount = 0;
@@ -19,7 +19,8 @@ public class CircularBuffer<T> {
         this.elements = (T[]) new Object[size];
     }
 
-    public CircularBuffer(int size) {
+    public CircularBuffer(Class<T[]> type, int size) {
+        this.type = type;
         if (size <= 0) {
             throw new IllegalArgumentException("Size should be >= 1");
         }
@@ -33,18 +34,15 @@ public class CircularBuffer<T> {
         }
         if (amount == size) {
             full = true;
-            head = 0;
+            //head = 0;
         }
         if (!isFull()) {
             if (head != size) {
                 elements[head] = t;
                 head++;
                 amount++;
-            } else if (!full) {
-                head = tail - 1;
-                elements[head] = t;
-                head++;
-                amount++;
+                if (head == size)
+                    head = 0;
             }
             if (amount == size) {
                 full = true;
@@ -54,7 +52,7 @@ public class CircularBuffer<T> {
 
     public T get() {
         if (!isEmpty()) {
-            if (tail == size) {
+            if (tail == size - 1) {
                 tail = 0;
             }
             T element = elements[tail];
@@ -83,7 +81,7 @@ public class CircularBuffer<T> {
         Arrays.sort(tailHeadElements);
         head = 0;
         tail = 0;
-        amount= 0;
+        amount = 0;
         addAll(Arrays.asList(tailHeadElements));
     }
 
@@ -91,6 +89,29 @@ public class CircularBuffer<T> {
         for (T t : toAdd) {
             put(t);
         }
+    }
+
+    public Object[] toObjectArray() {
+        if (tail <= head)
+            return Arrays.copyOfRange(elements, tail, head);
+        else {
+            Object[] array1 = Arrays.copyOfRange(elements, tail, size);
+            Object[] array2 = Arrays.copyOfRange(elements, 0, head -1);
+            Object[] result = Arrays.copyOf(array1, array1.length + array2.length);
+            System.arraycopy(array2, 0, result, array1.length, array2.length);
+            return result;
+        }
+    }
+
+
+    public T[] toArray() {
+        Object[] arrayOfElements = toObjectArray();
+        return Arrays.copyOf(arrayOfElements, arrayOfElements.length, type);
+
+    }
+
+    public List<T> asList() {
+        return Arrays.asList(toArray());
     }
 
     private boolean isFull() {
